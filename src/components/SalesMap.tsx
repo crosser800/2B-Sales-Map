@@ -406,6 +406,11 @@ export default function SalesMap({ salesDataSettings }: SalesMapProps) {
     }, [selectedCity, selectedCityId, selectedLevel, selectedRegion, themeColors]);
 
     const handleRegionChange = (regionId: string) => {
+        if (regionId === "all") {
+            setSelectedLevel("country");
+            return;
+        }
+
         const nextCity = cities.find((city) => city.regionId === regionId);
 
         setSelectedRegionId(regionId);
@@ -759,9 +764,10 @@ export default function SalesMap({ salesDataSettings }: SalesMapProps) {
                     <label className="filter-region">
                         Region
                         <select
-                            value={selectedRegionId}
+                            value={selectedLevel === "country" ? "all" : selectedRegionId}
                             onChange={(event) => handleRegionChange(event.target.value)}
                         >
+                            <option value="all">All regions</option>
                             {regionFeatures.map((region) => (
                                 <option
                                     key={getRegionId(region)}
