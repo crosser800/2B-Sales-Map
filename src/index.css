@@ -1,0 +1,62 @@
+
+:root {
+  --selection-yellow: #facc15;
+  --nav-button-bg: var(--selection-yellow);
+  --nav-button-text: #111827;
+  --font-main: 'Montserrat', system-ui, sans-serif;
+  --app-bg: #f8fafc;
+  --nav-bg: #0f172a;
+  --text-main: #475569;
+  --text-muted: #64748b;
+  --text-strong: #111827;
+  --card-bg: #ffffff;
+  --card-border: #cbd5e1;
+  --card-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+  --field-bg: #ffffff;
+  --field-border: #cbd5e1;
+  --field-text: #111827;
+  --map-bg: #dbeafe;
+  --map-stroke: #2563eb;
+  --map-marker: #475569;
+  --surface-overlay: rgba(255, 255, 255, 0.94);
+}
+
+#root {
+  width: 100%;
+  max-width: 1920px;
+  margin: 0 auto;
+  text-align: center;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  font-family: var(--font-main);
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: var(--app-bg);
+  font-family: var(--font-main);
+}
+
+.theme-dark {
+  --app-bg: #020617;
+  --nav-bg: #020617;
+  --text-main: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-strong: #f8fafc;
+  --card-bg: #0f172a;
+  --card-border: #1e293b;
+  --card-shadow: 0 16px 28px rgba(0, 0, 0, 0.34);
+  --field-bg: #111827;
+  --field-border: #334155;
+  --field-text: #f8fafc;
+  --map-bg: #0f172a;
+  --map-stroke: #38bdf8;
+  --map-marker: #cbd5e1;
+  --surface-overlay: rgba(15, 23, 42, 0.94);
+}

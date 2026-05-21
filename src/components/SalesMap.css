@@ -1,0 +1,236 @@
+.map-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  height: 100%;
+  min-height: calc(100vh - 134px);
+  min-height: calc(100svh - 134px);
+}
+
+.map-toolbar {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(130px, 1fr));
+  align-items: start;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+}
+
+.map-toolbar label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: var(--text-main);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.filter-country,
+.filter-region {
+  grid-column: span 3;
+  grid-row: 1;
+}
+
+.filter-city,
+.filter-sheet,
+.filter-category {
+  grid-column: span 1;
+  grid-row: 2;
+}
+
+.upload-actions {
+  display: flex;
+  grid-column: 4 / 6;
+  grid-row: 2;
+  align-items: end;
+  justify-content: flex-start;
+  gap: 14px;
+  justify-self: start;
+  width: auto;
+}
+
+.map-toolbar select {
+  width: 100%;
+  min-width: 0;
+  height: 42px;
+  border: 1px solid var(--field-border);
+  border-radius: 8px;
+  background: var(--field-bg);
+  color: var(--field-text);
+  font: 600 15px/1.2 var(--font-main);
+  padding: 0 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.map-toolbar select:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.kmz-upload input,
+.file-upload input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.kmz-upload-button,
+.file-upload-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 42px;
+  width: 128px;
+  border-radius: 8px;
+  background: var(--selection-yellow);
+  color: #111827;
+  font: 800 15px/1 var(--font-main);
+  cursor: pointer;
+}
+
+.kmz-upload,
+.file-upload {
+  display: grid;
+  gap: 6px;
+  width: 128px;
+  min-width: 128px;
+  color: var(--text-main);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.file-upload-button {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+.map-upload-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  min-height: 20px;
+  margin: -8px 0 0;
+  color: var(--text-main);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.map-frame {
+  position: relative;
+  flex: 1;
+  min-height: 680px;
+  width: 100%;
+}
+
+.counter-stack {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 500;
+  display: grid;
+  gap: 10px;
+}
+
+.sales-counter {
+  display: grid;
+  gap: 4px;
+  min-width: 220px;
+  padding: 14px 16px;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  background: var(--surface-overlay);
+  box-shadow: var(--card-shadow);
+  color: var(--text-main);
+  text-align: right;
+}
+
+.sales-counter span {
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.sales-counter strong {
+  color: var(--text-strong);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.overall-counter strong {
+  color: var(--selection-yellow);
+}
+
+.sales-map {
+  height: 100%;
+  min-height: inherit;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  background: var(--map-bg);
+}
+
+.sales-map .leaflet-control-attribution {
+  font-size: 11px;
+}
+
+@media (max-width: 900px) {
+  .map-toolbar {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .map-toolbar label,
+  .filter-country,
+  .filter-region,
+  .filter-city,
+  .filter-sheet,
+  .filter-category,
+  .upload-actions {
+    grid-column: auto;
+    grid-row: auto;
+    min-width: 0;
+  }
+
+  .upload-actions {
+    align-items: stretch;
+    flex-direction: column;
+    justify-self: stretch;
+  }
+
+  .kmz-upload,
+  .file-upload {
+    width: 100%;
+    min-width: 0;
+    text-align: left;
+  }
+
+  .kmz-upload-button,
+  .file-upload-button {
+    width: 100%;
+  }
+
+  .sales-map {
+    min-height: 520px;
+  }
+
+  .map-frame {
+    min-height: 520px;
+  }
+
+  .counter-stack {
+    left: 12px;
+    right: 12px;
+  }
+
+  .sales-counter {
+    min-width: 0;
+  }
+}

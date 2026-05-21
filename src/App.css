@@ -1,0 +1,42 @@
+.app-shell {
+  flex: 1;
+  min-height: 100vh;
+  min-height: 100svh;
+  background: var(--app-bg);
+  color: var(--text-main);
+}
+
+.app-screen {
+  flex: 1;
+  width: 100%;
+  min-height: calc(100vh - 70px);
+  min-height: calc(100svh - 70px);
+  padding: 32px clamp(24px, 4vw, 72px);
+  box-sizing: border-box;
+}
+
+.page-panel {
+  display: grid;
+  min-height: calc(100vh - 134px);
+  min-height: calc(100svh - 134px);
+  place-items: center;
+}
+
+.counter {
+  font-size: 16px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 2px solid transparent;
+  transition: border-color 0.3s;
+  margin-bottom: 24px;
+
+  &:hover {
+    border-color: var(--accent-border);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
