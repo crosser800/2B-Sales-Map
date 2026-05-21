@@ -7,4 +7,5 @@ export type SalesDataSettings = {
   showCategoryFilter: boolean;
   showSalesCount: boolean;
   showOverallCount: boolean;
+  overallShareDecimalPlaces: number;
 };

@@ -27,6 +27,14 @@ export default function Settings({
             [key]: value,
         });
     };
+    const updateSalesDataNumber = (key: keyof SalesDataSettings, value: string) => {
+        const nextValue = Number(value);
+
+        onSalesDataSettingsChange({
+            ...salesDataSettings,
+            [key]: Number.isFinite(nextValue) ? nextValue : 0,
+        });
+    };
 
     return (
         <section className="settings-page">
@@ -88,6 +96,23 @@ export default function Settings({
                                 updateSalesDataSetting("includedRegionColumns", event.target.value)
                             }
                             placeholder="NCR, BARMM, Region 1, Region IV-A"
+                        />
+                    </label>
+
+                    <label>
+                        Overall share decimal places
+                        <input
+                            type="number"
+                            min="0"
+                            max="10"
+                            step="1"
+                            value={salesDataSettings.overallShareDecimalPlaces}
+                            onChange={(event) =>
+                                updateSalesDataNumber(
+                                    "overallShareDecimalPlaces",
+                                    event.target.value,
+                                )
+                            }
                         />
                     </label>
 

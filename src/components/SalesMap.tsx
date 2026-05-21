@@ -65,6 +65,9 @@ const regionGroupIds: Record<string, string[]> = {
     mindanao: ["900000000", "1000000000", "1100000000", "1200000000", "1600000000", "1900000000"],
 };
 
+const clampDecimalPlaces = (value: number) =>
+    Math.min(10, Math.max(0, Number.isFinite(value) ? Math.trunc(value) : 0));
+
 type SalesMapProps = {
     salesDataSettings: SalesDataSettings;
 };
@@ -130,6 +133,9 @@ export default function SalesMap({ salesDataSettings }: SalesMapProps) {
         selectedLevel === "country" ? "Philippines Sales" : `${getRegionName(selectedRegion)} Sales`;
     const displayedOverallPercentage =
         overallSalesTotal > 0 ? (displayedSales / overallSalesTotal) * 100 : 0;
+    const overallShareDecimalPlaces = clampDecimalPlaces(
+        salesDataSettings.overallShareDecimalPlaces,
+    );
     const categoryColumnName = salesDataSettings.categoryColumn.trim();
     const uploadedCategories = useMemo(() => {
         if (!categoryColumnName || excelRows.length === 0) {
@@ -733,6 +739,11 @@ export default function SalesMap({ salesDataSettings }: SalesMapProps) {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
         }).format(value);
+    const formatOverallShare = (value: number) =>
+        new Intl.NumberFormat("en-US", {
+            minimumFractionDigits: overallShareDecimalPlaces,
+            maximumFractionDigits: overallShareDecimalPlaces,
+        }).format(value);
 
     return (
         <section className="map-workspace">
@@ -860,7 +871,7 @@ export default function SalesMap({ salesDataSettings }: SalesMapProps) {
                     {salesDataSettings.showOverallCount && (
                         <aside className="sales-counter overall-counter">
                             <span>Overall Share</span>
-                            <strong>{formatSales(displayedOverallPercentage)}%</strong>
+                            <strong>{formatOverallShare(displayedOverallPercentage)}%</strong>
                         </aside>
                     )}
                 </div>

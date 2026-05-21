@@ -16,6 +16,7 @@ export default function App() {
     showCategoryFilter: true,
     showSalesCount: true,
     showOverallCount: true,
+    overallShareDecimalPlaces: 2,
   });
 
   return (
