@@ -6,7 +6,7 @@ type NavbarProps = {
     setActivePage: (page: string) => void;
 };
 
-const navItems = ["Dashboard", "Map", "Settings", "Login"];
+const navItems = ["Dashboard", "Map", "Settings"];
 
 export default function Navbar({ activePage, setActivePage }: NavbarProps) {
     return (
