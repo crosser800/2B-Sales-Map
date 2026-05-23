@@ -171,6 +171,20 @@ export default function Settings({
                             />
                             Show overall percentage
                         </label>
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                checked={salesDataSettings.showSalesBreakdownCount}
+                                onChange={(event) =>
+                                    updateSalesDataToggle(
+                                        "showSalesBreakdownCount",
+                                        event.target.checked,
+                                    )
+                                }
+                            />
+                            Show sales breakdown count
+                        </label>
                     </div>
                 </div>
             </Card>

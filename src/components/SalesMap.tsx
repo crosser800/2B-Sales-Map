@@ -3,19 +3,11 @@ import L from "leaflet";
 import ExcelJS from "exceljs";
 import JSZip from "jszip";
 import { kml } from "@tmcw/togeojson";
-import {
-    Bar,
-    BarChart,
-    CartesianGrid,
-    Cell,
-    ResponsiveContainer,
-    Tooltip,
-    XAxis,
-    YAxis,
-} from "recharts";
 import type { Feature, FeatureCollection, Geometry } from "geojson";
 import philippinesRegions from "../data/philippines-regions.json";
 import type { SalesDataSettings } from "../types";
+import SalesBarGraph from "./SalesBarGraph";
+import type { SalesBreakdownDatum, SalesBreakdownMode, SalesBreakdownModes } from "./SalesBarGraph";
 import "leaflet/dist/leaflet.css";
 import "./SalesMap.css";
 
@@ -86,17 +78,6 @@ type ExcelWorkbookData = {
     sheetNames: string[];
     sheets: Record<string, Record<string, unknown>[]>;
 };
-
-type SalesBreakdownDatum = {
-    id: string;
-    label: string;
-    sales: number;
-    percentage: number;
-};
-
-type SalesBreakdownMode = "sheets" | "categories" | "regions";
-
-type SalesBreakdownModes = Record<SalesBreakdownMode, boolean>;
 
 export default function SalesMap({ salesDataSettings }: SalesMapProps) {
     const mapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -994,7 +975,6 @@ export default function SalesMap({ salesDataSettings }: SalesMapProps) {
         selectedRegionId,
         selectedSheetName,
     ]);
-    const salesBreakdownChartHeight = Math.max(360, salesBreakdownData.length * 34 + 90);
     const availableBreakdownModes: SalesBreakdownModes = {
         sheets: selectedSheetName === "all" && (excelWorkbook?.sheetNames.length ?? 0) > 1,
         categories: selectedCategoryFilter === "all" && uploadedCategories.length > 1,
@@ -1135,109 +1115,17 @@ export default function SalesMap({ salesDataSettings }: SalesMapProps) {
                 <div className="sales-map" ref={mapContainerRef} />
             </div>
 
-            <section className="map-chart-panel" aria-label="Sales percentage breakdown">
-                <div className="map-chart-heading">
-                    <div>
-                        <strong>Sales Breakdown</strong>
-                        <span>{salesBreakdownDescription}</span>
-                    </div>
-                    <strong>{formatOverallShare(displayedOverallPercentage)}%</strong>
-                </div>
-
-                <div className="map-chart-controls" aria-label="Sales breakdown grouping">
-                    <label>
-                        <input
-                            type="checkbox"
-                            checked={effectiveBreakdownModes.includes("sheets")}
-                            disabled={!availableBreakdownModes.sheets}
-                            onChange={(event) =>
-                                toggleSalesBreakdownMode("sheets", event.target.checked)
-                            }
-                        />
-                        By sheets
-                    </label>
-                    <label>
-                        <input
-                            type="checkbox"
-                            checked={effectiveBreakdownModes.includes("categories")}
-                            disabled={!availableBreakdownModes.categories}
-                            onChange={(event) =>
-                                toggleSalesBreakdownMode("categories", event.target.checked)
-                            }
-                        />
-                        By categories
-                    </label>
-                    <label>
-                        <input
-                            type="checkbox"
-                            checked={effectiveBreakdownModes.includes("regions")}
-                            disabled={!availableBreakdownModes.regions}
-                            onChange={(event) =>
-                                toggleSalesBreakdownMode("regions", event.target.checked)
-                            }
-                        />
-                        By regions
-                    </label>
-                </div>
-
-                <div
-                    className="map-chart-body"
-                    style={{ height: `${salesBreakdownChartHeight}px` }}
-                >
-                    {salesBreakdownData.length > 0 ? (
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart
-                                data={salesBreakdownData}
-                                layout="vertical"
-                                margin={{ top: 12, right: 36, bottom: 12, left: 18 }}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                                <XAxis
-                                    type="number"
-                                    domain={[0, "dataMax"]}
-                                    tickFormatter={(value) => `${formatOverallShare(Number(value))}%`}
-                                />
-                                <YAxis
-                                    type="category"
-                                    dataKey="label"
-                                    width={190}
-                                    tick={{ fontSize: 12, fontWeight: 700 }}
-                                />
-                                <Tooltip
-                                    formatter={(value, name, item) => {
-                                        const payload = item.payload as SalesBreakdownDatum;
-
-                                        if (name === "percentage") {
-                                            return [
-                                                `${formatOverallShare(Number(value))}% (${formatSales(
-                                                    payload.sales,
-                                                )})`,
-                                                "Share",
-                                            ];
-                                        }
-
-                                        return [formatSales(Number(value)), "Sales"];
-                                    }}
-                                    cursor={{ fill: "rgba(250, 204, 21, 0.16)" }}
-                                />
-                                <Bar dataKey="percentage" minPointSize={4} radius={[0, 8, 8, 0]}>
-                                    {salesBreakdownData.map((entry, index) => (
-                                        <Cell
-                                            key={entry.id}
-                                            fill={index === 0 ? "#facc15" : "#2563eb"}
-                                        />
-                                    ))}
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
-                    ) : (
-                        <div className="map-chart-empty">
-                            <strong>No percentage breakdown</strong>
-                            <span>Upload sales data or adjust the current filters.</span>
-                        </div>
-                    )}
-                </div>
-            </section>
+            <SalesBarGraph
+                data={salesBreakdownData}
+                description={salesBreakdownDescription}
+                overallPercentage={displayedOverallPercentage}
+                showCount={salesDataSettings.showSalesBreakdownCount}
+                activeModes={effectiveBreakdownModes}
+                availableModes={availableBreakdownModes}
+                onModeToggle={toggleSalesBreakdownMode}
+                formatSales={formatSales}
+                formatOverallShare={formatOverallShare}
+            />
         </section>
     );
 }
