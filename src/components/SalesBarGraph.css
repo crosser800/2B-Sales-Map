@@ -75,6 +75,19 @@
   stroke: var(--card-border);
 }
 
+.map-chart-body .recharts-default-tooltip {
+  border-color: var(--card-border) !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+.map-chart-body .recharts-tooltip-label,
+.map-chart-body .recharts-tooltip-item,
+.map-chart-body .recharts-tooltip-item-name,
+.map-chart-body .recharts-tooltip-item-value {
+  color: #0f172a !important;
+}
+
 .map-chart-empty {
   display: grid;
   place-items: center;
