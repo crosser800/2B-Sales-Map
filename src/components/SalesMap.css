@@ -181,6 +181,103 @@
   font-size: 11px;
 }
 
+.map-chart-panel {
+  display: grid;
+  grid-template-rows: auto auto auto;
+  gap: 14px;
+  width: 100%;
+  min-height: 460px;
+  padding: 18px;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  background: var(--card-bg);
+  box-shadow: var(--card-shadow);
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.map-chart-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--text-main);
+}
+
+.map-chart-heading div {
+  display: grid;
+  gap: 4px;
+}
+
+.map-chart-heading strong {
+  color: var(--text-strong);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.map-chart-heading span {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.map-chart-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  align-items: center;
+}
+
+.map-chart-controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-main);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.map-chart-controls input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--selection-yellow);
+}
+
+.map-chart-controls label:has(input:disabled) {
+  opacity: 0.52;
+}
+
+.map-chart-body {
+  min-height: 360px;
+}
+
+.map-chart-body .recharts-cartesian-axis-tick-value {
+  fill: var(--text-main);
+}
+
+.map-chart-body .recharts-cartesian-grid line {
+  stroke: var(--card-border);
+}
+
+.map-chart-empty {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  min-height: 360px;
+  color: var(--text-main);
+  text-align: center;
+}
+
+.map-chart-empty strong {
+  color: var(--text-strong);
+  font-size: 22px;
+}
+
+.map-chart-empty span {
+  font-size: 14px;
+  font-weight: 600;
+}
+
 @media (max-width: 900px) {
   .map-toolbar {
     align-items: stretch;
@@ -232,5 +329,19 @@
 
   .sales-counter {
     min-width: 0;
+  }
+
+  .map-chart-panel {
+    grid-template-rows: auto auto 420px;
+    padding: 14px;
+  }
+
+  .map-chart-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .map-chart-body {
+    min-height: 420px;
   }
 }

@@ -5,7 +5,7 @@ import type { SalesDataSettings } from "./types";
 import "./App.css";
 
 export default function App() {
-  const [activePage, setActivePage] = useState("Dashboard");
+  const [activePage, setActivePage] = useState("Map");
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [salesDataSettings, setSalesDataSettings] = useState<SalesDataSettings>({
     categoryColumn: "Category",
@@ -14,7 +14,7 @@ export default function App() {
     showRegionFilter: true,
     showSheetFilter: true,
     showCategoryFilter: true,
-    showSalesCount: true,
+    showSalesCount: false,
     showOverallCount: true,
     overallShareDecimalPlaces: 2,
   });

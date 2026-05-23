@@ -1,4 +1,3 @@
-import Card from "./Card";
 import SalesMap from "./SalesMap";
 import Settings from "./Settings";
 import type { SalesDataSettings } from "../types";
@@ -33,9 +32,5 @@ export default function MainContent({
         );
     }
 
-    return (
-        <section className="page-panel">
-            <Card title={activePage} description="This section is ready for your next component." />
-        </section>
-    );
+    return <SalesMap salesDataSettings={salesDataSettings} />;
 }

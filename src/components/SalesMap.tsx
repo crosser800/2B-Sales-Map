@@ -3,6 +3,16 @@ import L from "leaflet";
 import ExcelJS from "exceljs";
 import JSZip from "jszip";
 import { kml } from "@tmcw/togeojson";
+import {
+    Bar,
+    BarChart,
+    CartesianGrid,
+    Cell,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
+} from "recharts";
 import type { Feature, FeatureCollection, Geometry } from "geojson";
 import philippinesRegions from "../data/philippines-regions.json";
 import type { SalesDataSettings } from "../types";
@@ -77,6 +87,17 @@ type ExcelWorkbookData = {
     sheets: Record<string, Record<string, unknown>[]>;
 };
 
+type SalesBreakdownDatum = {
+    id: string;
+    label: string;
+    sales: number;
+    percentage: number;
+};
+
+type SalesBreakdownMode = "sheets" | "categories" | "regions";
+
+type SalesBreakdownModes = Record<SalesBreakdownMode, boolean>;
+
 export default function SalesMap({ salesDataSettings }: SalesMapProps) {
     const mapContainerRef = useRef<HTMLDivElement | null>(null);
     const mapRef = useRef<L.Map | null>(null);
@@ -112,6 +133,11 @@ export default function SalesMap({ salesDataSettings }: SalesMapProps) {
     const [excelRows, setExcelRows] = useState<Record<string, unknown>[]>([]);
     const [excelFileName, setExcelFileName] = useState("");
     const [selectedCategoryFilter, setSelectedCategoryFilter] = useState("all");
+    const [salesBreakdownModes, setSalesBreakdownModes] = useState<SalesBreakdownModes>({
+        sheets: false,
+        categories: false,
+        regions: true,
+    });
 
     const selectedRegion = useMemo(
         () =>
@@ -749,6 +775,231 @@ export default function SalesMap({ salesDataSettings }: SalesMapProps) {
             minimumFractionDigits: overallShareDecimalPlaces,
             maximumFractionDigits: overallShareDecimalPlaces,
         }).format(value);
+    const activeBreakdownModes = useMemo(
+        () =>
+            (Object.entries(salesBreakdownModes) as [SalesBreakdownMode, boolean][])
+                .filter((entry) => entry[1])
+                .map(([mode]) => mode),
+        [salesBreakdownModes],
+    );
+    const effectiveBreakdownModes = useMemo(() => {
+        const openModes: SalesBreakdownMode[] = [];
+
+        if (selectedSheetName === "all" && (excelWorkbook?.sheetNames.length ?? 0) > 1) {
+            openModes.push("sheets");
+        }
+
+        if (selectedCategoryFilter === "all" && uploadedCategories.length > 1) {
+            openModes.push("categories");
+        }
+
+        if (selectedLevel === "country") {
+            openModes.push("regions");
+        }
+
+        const selectedOpenModes = activeBreakdownModes.filter((mode) => openModes.includes(mode));
+
+        if (selectedOpenModes.length > 0) {
+            return selectedOpenModes;
+        }
+
+        if (openModes.length > 0) {
+            return openModes.slice(0, 1);
+        }
+
+        return [];
+    }, [
+        activeBreakdownModes,
+        excelWorkbook,
+        selectedCategoryFilter,
+        selectedLevel,
+        selectedSheetName,
+        uploadedCategories,
+    ]);
+    const salesBreakdownDescription =
+        effectiveBreakdownModes.length === 0
+            ? "Current filtered total"
+            : effectiveBreakdownModes.length === 1
+              ? `Percentage share by ${effectiveBreakdownModes[0]}`
+              : `Percentage share by ${effectiveBreakdownModes.join(", ")}`;
+    const toggleSalesBreakdownMode = (mode: SalesBreakdownMode, enabled: boolean) => {
+        setSalesBreakdownModes((currentModes) => {
+            const enabledCount = Object.values(currentModes).filter(Boolean).length;
+
+            if (!enabled && currentModes[mode] && enabledCount === 1) {
+                return currentModes;
+            }
+
+            return {
+                ...currentModes,
+                [mode]: enabled,
+            };
+        });
+    };
+    const salesBreakdownData = useMemo<SalesBreakdownDatum[]>(() => {
+        if (excelRows.length === 0 || overallSalesTotal <= 0) {
+            return [];
+        }
+
+        const regionLookup = new Map<string, { id: string; label: string; regionIds: string[] }>();
+        regionFeatures.forEach((region) => {
+            const regionId = getRegionId(region);
+
+            getRegionAliases(region).forEach((alias) => {
+                regionLookup.set(alias, {
+                    id: regionId,
+                    label: getRegionName(region),
+                    regionIds: [regionId],
+                });
+            });
+        });
+        Object.entries(regionGroupIds).forEach(([groupName, regionIds]) => {
+            regionLookup.set(normalizeRegionName(groupName), {
+                id: groupName,
+                label: groupName.charAt(0).toUpperCase() + groupName.slice(1),
+                regionIds,
+            });
+        });
+
+        const allowedCategories = new Set(
+            splitSettingList(salesDataSettings.includedCategories).map(normalizeCategory),
+        );
+        const selectedCategory =
+            salesDataSettings.showCategoryFilter && selectedCategoryFilter !== "all"
+                ? normalizeCategory(selectedCategoryFilter)
+                : "";
+        const allowedRegionHeaders = new Set(
+            splitSettingList(salesDataSettings.includedRegionColumns).map(normalizeRegionName),
+        );
+        const categoryColumn = salesDataSettings.categoryColumn.trim();
+        const groupBySheets = effectiveBreakdownModes.includes("sheets");
+        const groupByCategories = effectiveBreakdownModes.includes("categories");
+        const groupByRegions = effectiveBreakdownModes.includes("regions");
+        const getRowsToCount = (rows: Record<string, unknown>[]) =>
+            selectedCategory.length > 0
+                ? rows.filter((row) => normalizeCategory(row[categoryColumn]) === selectedCategory)
+                : allowedCategories.size === 0
+                  ? rows
+                  : rows.filter((row) =>
+                        allowedCategories.has(normalizeCategory(row[categoryColumn])),
+                    );
+        const getMatchingColumns = (rows: Record<string, unknown>[]) => {
+            const firstRow = rows[0];
+
+            if (!firstRow) {
+                return [];
+            }
+
+            return Object.keys(firstRow)
+                .map((columnName) => {
+                    const normalizedColumn = normalizeRegionName(columnName);
+
+                    if (
+                        allowedRegionHeaders.size > 0 &&
+                        !allowedRegionHeaders.has(normalizedColumn)
+                    ) {
+                        return null;
+                    }
+
+                    const matchedRegion = regionLookup.get(normalizedColumn);
+
+                    return matchedRegion ? { columnName, matchedRegion } : null;
+                })
+                .filter(
+                    (
+                        item,
+                    ): item is {
+                        columnName: string;
+                        matchedRegion: { id: string; label: string; regionIds: string[] };
+                    } => Boolean(item),
+                );
+        };
+        const toPercentage = (sales: number) => (sales / overallSalesTotal) * 100;
+        const selectedBreakdownRegionId =
+            selectedLevel === "country" ? "all" : selectedRegionId;
+        const sheetEntries =
+            excelWorkbook && selectedSheetName === "all"
+                ? excelWorkbook.sheetNames.map((sheetName) => ({
+                      sheetName,
+                      rows: excelWorkbook.sheets[sheetName] ?? [],
+                  }))
+                : [
+                      {
+                          sheetName: selectedSheetName === "all" ? "Sales Data" : selectedSheetName,
+                          rows: excelRows,
+                      },
+                  ];
+        const totals = new Map<string, SalesBreakdownDatum>();
+
+        sheetEntries.forEach(({ sheetName, rows }) => {
+            const rowsToCount = getRowsToCount(rows);
+            const matchingColumns = getMatchingColumns(rows);
+
+            matchingColumns.forEach(({ columnName, matchedRegion }) => {
+                if (
+                    selectedBreakdownRegionId !== "all" &&
+                    !matchedRegion.regionIds.includes(selectedBreakdownRegionId)
+                ) {
+                    return;
+                }
+
+                rowsToCount.forEach((row) => {
+                    const sales = toNumber(row[columnName]);
+
+                    if (sales === 0) {
+                        return;
+                    }
+
+                    const categoryLabel =
+                        categoryColumn.length > 0
+                            ? String(row[categoryColumn] ?? "").trim() || "Uncategorized"
+                            : "All categories";
+                    const keyParts = [
+                        groupBySheets ? sheetName : "all-sheets",
+                        groupByCategories ? categoryLabel : "all-categories",
+                        groupByRegions ? matchedRegion.id : "all-regions",
+                    ];
+                    const labelParts = [
+                        groupBySheets ? sheetName : "",
+                        groupByCategories ? categoryLabel : "",
+                        groupByRegions ? matchedRegion.label : "",
+                    ].filter(Boolean);
+                    const key = keyParts.join("||");
+                    const current = totals.get(key) ?? {
+                        id: key,
+                        label: labelParts.length > 0 ? labelParts.join(" / ") : "Total",
+                        sales: 0,
+                        percentage: 0,
+                    };
+
+                    current.sales += sales;
+                    current.percentage = toPercentage(current.sales);
+                    totals.set(key, current);
+                });
+            });
+        });
+
+        return Array.from(totals.values()).sort(
+            (first, second) => second.percentage - first.percentage,
+        );
+    }, [
+        excelRows,
+        excelWorkbook,
+        overallSalesTotal,
+        regionFeatures,
+        salesDataSettings,
+        effectiveBreakdownModes,
+        selectedCategoryFilter,
+        selectedLevel,
+        selectedRegionId,
+        selectedSheetName,
+    ]);
+    const salesBreakdownChartHeight = Math.max(360, salesBreakdownData.length * 34 + 90);
+    const availableBreakdownModes: SalesBreakdownModes = {
+        sheets: selectedSheetName === "all" && (excelWorkbook?.sheetNames.length ?? 0) > 1,
+        categories: selectedCategoryFilter === "all" && uploadedCategories.length > 1,
+        regions: selectedLevel === "country",
+    };
 
     return (
         <section className="map-workspace">
@@ -883,6 +1134,110 @@ export default function SalesMap({ salesDataSettings }: SalesMapProps) {
                 </div>
                 <div className="sales-map" ref={mapContainerRef} />
             </div>
+
+            <section className="map-chart-panel" aria-label="Sales percentage breakdown">
+                <div className="map-chart-heading">
+                    <div>
+                        <strong>Sales Breakdown</strong>
+                        <span>{salesBreakdownDescription}</span>
+                    </div>
+                    <strong>{formatOverallShare(displayedOverallPercentage)}%</strong>
+                </div>
+
+                <div className="map-chart-controls" aria-label="Sales breakdown grouping">
+                    <label>
+                        <input
+                            type="checkbox"
+                            checked={effectiveBreakdownModes.includes("sheets")}
+                            disabled={!availableBreakdownModes.sheets}
+                            onChange={(event) =>
+                                toggleSalesBreakdownMode("sheets", event.target.checked)
+                            }
+                        />
+                        By sheets
+                    </label>
+                    <label>
+                        <input
+                            type="checkbox"
+                            checked={effectiveBreakdownModes.includes("categories")}
+                            disabled={!availableBreakdownModes.categories}
+                            onChange={(event) =>
+                                toggleSalesBreakdownMode("categories", event.target.checked)
+                            }
+                        />
+                        By categories
+                    </label>
+                    <label>
+                        <input
+                            type="checkbox"
+                            checked={effectiveBreakdownModes.includes("regions")}
+                            disabled={!availableBreakdownModes.regions}
+                            onChange={(event) =>
+                                toggleSalesBreakdownMode("regions", event.target.checked)
+                            }
+                        />
+                        By regions
+                    </label>
+                </div>
+
+                <div
+                    className="map-chart-body"
+                    style={{ height: `${salesBreakdownChartHeight}px` }}
+                >
+                    {salesBreakdownData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart
+                                data={salesBreakdownData}
+                                layout="vertical"
+                                margin={{ top: 12, right: 36, bottom: 12, left: 18 }}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                                <XAxis
+                                    type="number"
+                                    domain={[0, "dataMax"]}
+                                    tickFormatter={(value) => `${formatOverallShare(Number(value))}%`}
+                                />
+                                <YAxis
+                                    type="category"
+                                    dataKey="label"
+                                    width={190}
+                                    tick={{ fontSize: 12, fontWeight: 700 }}
+                                />
+                                <Tooltip
+                                    formatter={(value, name, item) => {
+                                        const payload = item.payload as SalesBreakdownDatum;
+
+                                        if (name === "percentage") {
+                                            return [
+                                                `${formatOverallShare(Number(value))}% (${formatSales(
+                                                    payload.sales,
+                                                )})`,
+                                                "Share",
+                                            ];
+                                        }
+
+                                        return [formatSales(Number(value)), "Sales"];
+                                    }}
+                                    cursor={{ fill: "rgba(250, 204, 21, 0.16)" }}
+                                />
+                                <Bar dataKey="percentage" minPointSize={4} radius={[0, 8, 8, 0]}>
+                                    {salesBreakdownData.map((entry, index) => (
+                                        <Cell
+                                            key={entry.id}
+                                            fill={index === 0 ? "#facc15" : "#2563eb"}
+                                        />
+                                    ))}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="map-chart-empty">
+                            <strong>No percentage breakdown</strong>
+                            <span>Upload sales data or adjust the current filters.</span>
+                        </div>
+                    )}
+                </div>
+            </section>
         </section>
     );
 }
